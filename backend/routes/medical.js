@@ -6,17 +6,35 @@ const pool = require('../db');
 router.get('/', async (req, res) => {
   try {
     const { animal_id } = req.query;
-    let query = 'SELECT mr.*, a.name as animal_name FROM medical_records mr LEFT JOIN animals a ON mr.animal_id = a.id';
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const offset = ((parseInt(req.query.page) || 1) - 1) * limit;
+
+    let baseQuery = 'FROM medical_records mr LEFT JOIN animals a ON mr.animal_id = a.id';
     const params = [];
 
     if (animal_id) {
       params.push(animal_id);
-      query += ` WHERE mr.animal_id = $${params.length}`;
+      baseQuery += ` WHERE mr.animal_id = $${params.length}`;
     }
-    query += ' ORDER BY mr.record_date DESC';
 
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    const countResult = await pool.query(`SELECT COUNT(*) ${baseQuery}`, params);
+    const total = parseInt(countResult.rows[0].count);
+
+    params.push(limit, offset);
+    const result = await pool.query(
+      `SELECT mr.*, a.name as animal_name ${baseQuery} ORDER BY mr.record_date DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+
+    res.json({
+      data: result.rows,
+      pagination: {
+        total,
+        page: parseInt(req.query.page) || 1,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Get medical records error:', error);
     res.status(500).json({ error: 'Internal server error' });

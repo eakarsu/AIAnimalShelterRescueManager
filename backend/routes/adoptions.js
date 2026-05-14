@@ -8,17 +8,35 @@ const pool = require('../db');
 router.get('/applications', async (req, res) => {
   try {
     const { status } = req.query;
-    let query = 'SELECT aa.*, a.name as animal_name FROM adoption_applications aa LEFT JOIN animals a ON aa.animal_id = a.id';
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const offset = ((parseInt(req.query.page) || 1) - 1) * limit;
+
+    let baseQuery = 'FROM adoption_applications aa LEFT JOIN animals a ON aa.animal_id = a.id';
     const params = [];
 
     if (status) {
       params.push(status);
-      query += ` WHERE aa.status = $${params.length}`;
+      baseQuery += ` WHERE aa.status = $${params.length}`;
     }
-    query += ' ORDER BY aa.created_at DESC';
 
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    const countResult = await pool.query(`SELECT COUNT(*) ${baseQuery}`, params);
+    const total = parseInt(countResult.rows[0].count);
+
+    params.push(limit, offset);
+    const result = await pool.query(
+      `SELECT aa.*, a.name as animal_name ${baseQuery} ORDER BY aa.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+
+    res.json({
+      data: result.rows,
+      pagination: {
+        total,
+        page: parseInt(req.query.page) || 1,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Get applications error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -99,10 +117,22 @@ router.delete('/applications/:id', async (req, res) => {
 // GET /api/adoptions/contracts
 router.get('/contracts', async (req, res) => {
   try {
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const offset = ((parseInt(req.query.page) || 1) - 1) * limit;
+    const countResult = await pool.query('SELECT COUNT(*) FROM adoption_contracts');
     const result = await pool.query(
-      `SELECT ac.*, a.name as animal_name FROM adoption_contracts ac LEFT JOIN animals a ON ac.animal_id = a.id ORDER BY ac.created_at DESC`
+      `SELECT ac.*, a.name as animal_name FROM adoption_contracts ac LEFT JOIN animals a ON ac.animal_id = a.id ORDER BY ac.created_at DESC LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
-    res.json(result.rows);
+    res.json({
+      data: result.rows,
+      pagination: {
+        total: parseInt(countResult.rows[0].count),
+        page: parseInt(req.query.page) || 1,
+        limit,
+        totalPages: Math.ceil(parseInt(countResult.rows[0].count) / limit),
+      },
+    });
   } catch (error) {
     console.error('Get contracts error:', error);
     res.status(500).json({ error: 'Internal server error' });

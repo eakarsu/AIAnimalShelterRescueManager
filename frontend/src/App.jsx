@@ -18,6 +18,7 @@ import EventsPage from './pages/EventsPage';
 import MedicationsPage from './pages/MedicationsPage';
 import QuarantinePage from './pages/QuarantinePage';
 import AIToolsPage from './pages/AIToolsPage';
+import AnimalDetail from './pages/AnimalDetail';
 import './App.css';
 
 function ProtectedRoute({ children }) {
@@ -35,6 +36,7 @@ function App() {
         <Route path="/" element={<LoginPage />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/animals" element={<ProtectedRoute><AnimalsPage /></ProtectedRoute>} />
+        <Route path="/animals/:id" element={<ProtectedRoute><AnimalDetail /></ProtectedRoute>} />
         <Route path="/kennels" element={<ProtectedRoute><KennelsPage /></ProtectedRoute>} />
         <Route path="/medical" element={<ProtectedRoute><MedicalPage /></ProtectedRoute>} />
         <Route path="/behavioral" element={<ProtectedRoute><BehavioralPage /></ProtectedRoute>} />
