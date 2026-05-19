@@ -6,7 +6,10 @@ const pool = require('../db');
 router.get('/', async (req, res) => {
   try {
     const { species, status, breed } = req.query;
-    let query = 'SELECT * FROM animals';
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const offset = ((parseInt(req.query.page) || 1) - 1) * limit;
+
+    let baseQuery = 'FROM animals';
     const conditions = [];
     const params = [];
 
@@ -24,12 +27,25 @@ router.get('/', async (req, res) => {
     }
 
     if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
+      baseQuery += ' WHERE ' + conditions.join(' AND ');
     }
-    query += ' ORDER BY created_at DESC';
 
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    const countResult = await pool.query(`SELECT COUNT(*) ${baseQuery}`, params);
+    const total = parseInt(countResult.rows[0].count);
+
+    params.push(limit, offset);
+    const dataQuery = `SELECT * ${baseQuery} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
+    const result = await pool.query(dataQuery, params);
+
+    res.json({
+      data: result.rows,
+      pagination: {
+        total,
+        page: parseInt(req.query.page) || 1,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Get animals error:', error);
     res.status(500).json({ error: 'Internal server error' });

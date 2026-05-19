@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   PawPrint, Home, Stethoscope, Brain, Heart, FileText, Users, HandHeart,
   DollarSign, Package, Search, Clock, Calendar, Pill, ShieldAlert, Sparkles,
-  LogOut, LayoutDashboard
+  LogOut, LayoutDashboard, LayoutGrid
 } from 'lucide-react';
 
 const navSections = [
@@ -51,6 +51,12 @@ const navSections = [
     title: 'Intelligence',
     items: [
       { path: '/ai', label: 'AI Tools', icon: Sparkles },
+    ]
+  },
+  {
+    title: 'Shelter Views',
+    items: [
+      { path: '/custom-views', label: 'Shelter Views', icon: LayoutGrid },
     ]
   },
 ];

@@ -5,8 +5,22 @@ const pool = require('../db');
 // GET /api/kennels
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM kennels ORDER BY kennel_number');
-    res.json(result.rows);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const offset = ((parseInt(req.query.page) || 1) - 1) * limit;
+    const countResult = await pool.query('SELECT COUNT(*) FROM kennels');
+    const result = await pool.query(
+      'SELECT * FROM kennels ORDER BY kennel_number LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
+    res.json({
+      data: result.rows,
+      pagination: {
+        total: parseInt(countResult.rows[0].count),
+        page: parseInt(req.query.page) || 1,
+        limit,
+        totalPages: Math.ceil(parseInt(countResult.rows[0].count) / limit),
+      },
+    });
   } catch (error) {
     console.error('Get kennels error:', error);
     res.status(500).json({ error: 'Internal server error' });
