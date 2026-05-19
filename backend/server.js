@@ -9,7 +9,7 @@ const PORT = process.env.BACKEND_PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5273', 'http://localhost:8401'],
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -50,6 +50,9 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/medications', medicationsRoutes);
 app.use('/api/quarantine', quarantineRoutes);
 app.use('/api/ai', aiRoutes);
+
+// Custom Shelter Views (registered before 404 handler)
+app.use('/api/custom-views', require('./routes/customViews'));
 
 // Health check
 app.get('/api/health', (req, res) => {
