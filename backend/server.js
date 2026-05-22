@@ -53,6 +53,7 @@ app.use('/api/ai', aiRoutes);
 
 // Custom Shelter Views (registered before 404 handler)
 app.use('/api/custom-views', require('./routes/customViews'));
+app.use('/api/foster-capacity-balancer', require('./routes/fosterCapacityBalancer'));
 
 // Health check
 app.get('/api/health', (req, res) => {

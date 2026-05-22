@@ -20,7 +20,13 @@ import QuarantinePage from './pages/QuarantinePage';
 import AIToolsPage from './pages/AIToolsPage';
 import AnimalDetail from './pages/AnimalDetail';
 import CustomViewsPage from './pages/CustomViewsPage';
+import FosterCapacityBalancer from './pages/FosterCapacityBalancer';
 import './App.css';
+
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
+import TimelineView from './pages/TimelineView';
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -34,6 +40,10 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/insights/timeline" element={<ProtectedRoute><TimelineView /></ProtectedRoute>} />
+        <Route path="/codex/custom-viz" element={<ProtectedRoute><CodexCustomVizFeature /></ProtectedRoute>} />
+        <Route path="/codex/operations" element={<ProtectedRoute><CodexOperationsFeature /></ProtectedRoute>} />
+
         <Route path="/" element={<LoginPage />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/animals" element={<ProtectedRoute><AnimalsPage /></ProtectedRoute>} />
@@ -54,6 +64,7 @@ function App() {
         <Route path="/quarantine" element={<ProtectedRoute><QuarantinePage /></ProtectedRoute>} />
         <Route path="/ai" element={<ProtectedRoute><AIToolsPage /></ProtectedRoute>} />
         <Route path="/custom-views" element={<ProtectedRoute><CustomViewsPage /></ProtectedRoute>} />
+        <Route path="/foster-capacity-balancer" element={<ProtectedRoute><FosterCapacityBalancer /></ProtectedRoute>} />
       </Routes>
     </Router>
   );
