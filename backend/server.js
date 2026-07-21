@@ -6,10 +6,16 @@ const cors = require('cors');
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 3001;
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must contain at least 32 characters');
+}
+if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGINS) throw new Error('CORS_ORIGINS is required in production');
+if (process.env.NODE_ENV === 'production' && !process.env.DEFAULT_TENANT_ID) throw new Error('DEFAULT_TENANT_ID is required in production');
+const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',').map((value) => value.trim()).filter(Boolean);
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5273', 'http://localhost:8401'],
+  origin: corsOrigins,
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -49,7 +55,8 @@ app.use('/api/strayholds', strayholdsRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/medications', medicationsRoutes);
 app.use('/api/quarantine', quarantineRoutes);
-app.use('/api/ai', aiRoutes);
+if (process.env.ENABLE_EXPERIMENTAL_AI === 'true') app.use('/api/ai', aiRoutes);
+app.use('/api/shelter-workflow', require('./routes/shelterWorkflow'));
 
 // Custom Shelter Views (registered before 404 handler)
 app.use('/api/custom-views', require('./routes/customViews'));
@@ -77,21 +84,3 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
-
-// BATCH_00_AUDIT_MOUNTS
-app.use('/api/breed-id', require('./routes/breedId'));
-app.use('/api/adopter-match', require('./routes/adopterMatch'));
-app.use('/api/return-prevention', require('./routes/returnPrevention'));
-app.use('/api/volunteer-scheduler', require('./routes/volunteerScheduler'));
-app.use('/api/microchip-registry', require('./routes/microchipRegistry'));
-
-// === Batch 00 Gaps & Frontend Mounts ===
-app.use('/api/gap-ai-breed-identification-photo', require('./routes/gap_ai_breed_identification_photo'));
-app.use('/api/gap-ai-health-risk-prediction-behavioral', require('./routes/gap_ai_health_risk_prediction_behavioral'));
-app.use('/api/gap-ai-volunteer-show-prediction', require('./routes/gap_ai_volunteer_show_prediction'));
-app.use('/api/gap-microchip-registry-integration-akc-homeagain', require('./routes/gap_microchip_registry_integration_akc_homeagain'));
-app.use('/api/gap-gps-collar-tracking', require('./routes/gap_gps_collar_tracking'));
-app.use('/api/gap-structured-training-session-progress-tracking', require('./routes/gap_structured_training_session_progress_tracking'));
-app.use('/api/gap-notifications-subsystem', require('./routes/gap_notifications_subsystem'));
-app.use('/api/gap-outbound-webhooks', require('./routes/gap_outbound_webhooks'));
-app.use('/api/gap-public-adoption-portal', require('./routes/gap_public_adoption_portal'));

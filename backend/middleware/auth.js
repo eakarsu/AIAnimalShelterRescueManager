@@ -20,6 +20,9 @@ const authMiddleware = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded.tenant_id || typeof decoded.tenant_id !== 'string') {
+      return res.status(403).json({ error: 'Token is missing organization scope' });
+    }
     req.user = decoded;
     next();
   } catch (error) {
