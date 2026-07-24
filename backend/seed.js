@@ -3,12 +3,16 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const pool = require('./db');
 const { createTables } = require('./schema');
 
-if (process.env.CONFIRM_DEMO_SEED !== 'yes') throw new Error('Refusing destructive demo seed without CONFIRM_DEMO_SEED=yes');
+if (!/^yes$/i.test(process.env.CONFIRM_DEMO_SEED || '')) throw new Error('Refusing destructive demo seed without CONFIRM_DEMO_SEED=yes');
 const bcrypt = require('bcryptjs');
 
 const seed = async () => {
   try {
     console.log('Starting seed process...');
+
+    // A fresh dedicated database has no tables yet. Establish the schema
+    // before the reset so the guarded demo seed is repeatable from empty state.
+    await createTables();
 
     // Truncate all tables
     await pool.query(`

@@ -56,6 +56,7 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/medications', medicationsRoutes);
 app.use('/api/quarantine', quarantineRoutes);
 if (process.env.ENABLE_EXPERIMENTAL_AI === 'true') app.use('/api/ai', aiRoutes);
+app.use('/api/runtime-ai', require('./routes/runtimeAi'));
 app.use('/api/shelter-workflow', require('./routes/shelterWorkflow'));
 
 // Custom Shelter Views (registered before 404 handler)

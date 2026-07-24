@@ -378,7 +378,7 @@ export default function AIToolsPage() {
                 disabled={!returnAnimalId || !returnAdopterProfile || returnLoading}
                 onClick={() => {
                   let parsed;
-                  try { parsed = JSON.parse(returnAdopterProfile); } catch (e) {
+                  try { parsed = JSON.parse(returnAdopterProfile); } catch {
                     setReturnResult('Error: Adopter Profile must be valid JSON');
                     return;
                   }
