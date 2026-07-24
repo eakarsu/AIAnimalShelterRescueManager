@@ -6,6 +6,12 @@ const { createTables } = require('./schema');
 if (!/^yes$/i.test(process.env.CONFIRM_DEMO_SEED || '')) throw new Error('Refusing destructive demo seed without CONFIRM_DEMO_SEED=yes');
 const bcrypt = require('bcryptjs');
 
+function requireDemoPassword() {
+  const password = process.env.DEMO_PASSWORD || process.env.SEED_DEMO_PASSWORD || process.env.DEMO_SEED_PASSWORD || '';
+  if (password.length < 12 || password.length > 1024) throw new Error('DEMO_PASSWORD must contain 12-1024 characters');
+  return password;
+}
+
 const seed = async () => {
   try {
     console.log('Starting seed process...');
@@ -29,8 +35,8 @@ const seed = async () => {
     await createTables();
 
     // Seed Users
-    const adminHash = await bcrypt.hash('admin123', 10);
-    const staffHash = await bcrypt.hash('staff123', 10);
+    const adminHash = await bcrypt.hash(requireDemoPassword(), 10);
+    const staffHash = await bcrypt.hash(requireDemoPassword(), 10);
     await pool.query(`
       INSERT INTO users (email, password, name, role) VALUES
       ($1, $2, 'Admin User', 'admin'),

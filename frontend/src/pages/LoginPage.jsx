@@ -31,8 +31,8 @@ export default function LoginPage() {
   };
 
   const quickLogin = () => {
-    setEmail('admin@shelter.com');
-    setPassword('admin123');
+    setEmail(import.meta.env.VITE_DEMO_EMAIL || '');
+    setPassword(import.meta.env.VITE_DEMO_PASSWORD || '');
     doLogin(null, 'admin@shelter.com', 'admin123');
   };
 
