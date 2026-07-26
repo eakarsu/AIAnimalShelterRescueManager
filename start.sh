@@ -58,6 +58,10 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 test -f "$root/.env" || { echo 'Missing .env; copy .env.example and configure it.' >&2; exit 1; }
 test -d "$root/backend/node_modules" && test -d "$root/frontend/node_modules" || { echo 'Dependencies missing; run scripts/bootstrap.sh.' >&2; exit 1; }
 set -a; source "$root/.env"; set +a
+if [ "${NODE_ENV:-development}" != production ] && [ "${ENABLE_DEMO_CREDENTIAL_AUTOFILL:-true}" = true ]; then
+  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$root/backend/migrations/001_governed_shelter_workflow.sql" >/dev/null
+  node "$root/backend/create-admin.js"
+fi
 : "${BACKEND_PORT:=3001}" "${FRONTEND_PORT:=5173}"
 [[ "$BACKEND_PORT" =~ ^[0-9]+$ && "$FRONTEND_PORT" =~ ^[0-9]+$ ]] || { echo 'Backend and frontend ports must be numeric.' >&2; exit 2; }
 test "$BACKEND_PORT" != "$FRONTEND_PORT" || { echo 'Backend and frontend ports must be different.' >&2; exit 2; }
