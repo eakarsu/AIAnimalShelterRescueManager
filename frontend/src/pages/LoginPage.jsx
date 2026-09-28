@@ -30,10 +30,15 @@ export default function LoginPage() {
     }
   };
 
-  const quickLogin = () => {
-    setEmail(import.meta.env.VITE_DEMO_EMAIL || '');
-    setPassword(import.meta.env.VITE_DEMO_PASSWORD || '');
-    doLogin(null, 'admin@shelter.com', 'admin123');
+  const quickLogin = async () => {
+    setError('');
+    try {
+      const res = await api.get('/auth/demo-credentials');
+      setEmail(res.data.email);
+      setPassword(res.data.password);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Demo credentials are unavailable.');
+    }
   };
 
   return (
@@ -75,7 +80,7 @@ export default function LoginPage() {
           <div className="login-divider">or</div>
           <button className="btn btn-accent btn-lg" type="button" onClick={quickLogin} disabled={loading}>
             <Zap size={18} />
-            Quick Login (Demo)
+            Auto Fill Demo Credentials
           </button>
         </form>
       </div>
