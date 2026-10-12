@@ -4,11 +4,23 @@ import api from '../api';
 import AIOutput from '../components/AIOutput';
 import FormField from '../components/FormField';
 
+function PresetButtons({ labels, onFill, prerequisite }) {
+  return <div className="ai-preset-bar">
+    <div><strong>Fill example fields</strong><p>Review the selected records and example values before generating.</p>
+      {prerequisite && <p role="note">Prerequisite: {prerequisite}</p>}
+    </div>
+    <div className="ai-actions">{labels.map((label, index) => <button key={label} type="button" className="btn btn-secondary" disabled={!!prerequisite} onClick={() => onFill(index)}>{label}</button>)}</div>
+  </div>;
+}
+
+const selectedOrAvailable = (current, records, index) => current || String(records[index % records.length]?.id || '');
+
 export default function AIToolsPage() {
   const [animals, setAnimals] = useState([]);
   const [assessments, setAssessments] = useState([]);
   const [applications, setApplications] = useState([]);
   const [placements, setPlacements] = useState([]);
+  const [referenceErrors, setReferenceErrors] = useState([]);
 
   // State for each AI tool
   const [adoptionAnimalId, setAdoptionAnimalId] = useState('');
@@ -64,22 +76,22 @@ export default function AIToolsPage() {
   useEffect(() => {
     // Fetch reference data for dropdowns
     const fetchData = async () => {
-      try {
-        const [animalsRes, assessmentsRes, applicationsRes, placementsRes] = await Promise.all([
+      const responses = await Promise.allSettled([
           api.get('/animals'),
           api.get('/behavioral'),
           api.get('/adoptions/applications'),
           api.get('/fosters/placements'),
-        ]);
-        const extractData = (res) => {
-          const d = res.data;
-          return Array.isArray(d) ? d : (Array.isArray(d?.data) ? d.data : []);
-        };
-        setAnimals(extractData(animalsRes));
-        setAssessments(extractData(assessmentsRes));
-        setApplications(extractData(applicationsRes));
-        setPlacements(extractData(placementsRes));
-      } catch (err) { console.error(err); }
+      ]);
+      const extractData = (response) => {
+        if (response.status !== 'fulfilled') return [];
+        const data = response.value.data;
+        return Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+      };
+      setAnimals(extractData(responses[0]));
+      setAssessments(extractData(responses[1]));
+      setApplications(extractData(responses[2]));
+      setPlacements(extractData(responses[3]));
+      setReferenceErrors(responses.map((response) => response.status === 'rejected'));
     };
     fetchData();
   }, []);
@@ -89,7 +101,7 @@ export default function AIToolsPage() {
     setResult(null);
     try {
       const res = await api.post(endpoint, body);
-      setResult(res.data.content || res.data.result || res.data);
+      setResult(res.data.content ?? res.data.result ?? res.data);
     } catch (err) {
       setResult('Error: ' + (err.response?.data?.error || 'AI request failed'));
     } finally {
@@ -121,6 +133,7 @@ export default function AIToolsPage() {
             </div>
           </div>
           <div className="ai-tool-card-body">
+            <PresetButtons labels={['First animal listing', 'Another animal listing']} prerequisite={!animals.length ? (referenceErrors[0] ? 'Animal records could not be loaded.' : 'Add an animal record first.') : ''} onFill={(i) => setAdoptionAnimalId(selectedOrAvailable(adoptionAnimalId, animals, i))} />
             <div className="ai-tool-controls">
               <FormField label="Select Animal" name="adoptionAnimal" type="select" value={adoptionAnimalId} onChange={(_, v) => setAdoptionAnimalId(v)} options={animalOptions} placeholder="Choose an animal..." />
               <button className="btn btn-primary" disabled={!adoptionAnimalId || adoptionLoading} onClick={() => callAI('/ai/adoption-listing', { animalId: adoptionAnimalId }, setAdoptionResult, setAdoptionLoading)}>
@@ -143,6 +156,7 @@ export default function AIToolsPage() {
             </div>
           </div>
           <div className="ai-tool-card-body">
+            <PresetButtons labels={['Behavior overview', 'Care plan review']} prerequisite={!assessments.length ? (referenceErrors[1] ? 'Assessments could not be loaded.' : 'Create a behavioral assessment first.') : ''} onFill={(i) => setBehaviorAssessmentId(selectedOrAvailable(behaviorAssessmentId, assessments, i))} />
             <div className="ai-tool-controls">
               <FormField label="Select Assessment" name="behaviorAssessment" type="select" value={behaviorAssessmentId} onChange={(_, v) => setBehaviorAssessmentId(v)} options={assessmentOptions} placeholder="Choose an assessment..." />
               <button className="btn btn-primary" disabled={!behaviorAssessmentId || behaviorLoading} onClick={() => callAI('/ai/behavior-analysis', { assessmentId: behaviorAssessmentId }, setBehaviorResult, setBehaviorLoading)}>
@@ -165,6 +179,7 @@ export default function AIToolsPage() {
             </div>
           </div>
           <div className="ai-tool-card-body">
+            <PresetButtons labels={['Recent care summary', 'Longitudinal review']} prerequisite={!animals.length ? (referenceErrors[0] ? 'Animal records could not be loaded.' : 'Add an animal record first.') : ''} onFill={(i) => setMedicalAnimalId(selectedOrAvailable(medicalAnimalId, animals, i))} />
             <div className="ai-tool-controls">
               <FormField label="Select Animal" name="medicalAnimal" type="select" value={medicalAnimalId} onChange={(_, v) => setMedicalAnimalId(v)} options={animalOptions} placeholder="Choose an animal..." />
               <button className="btn btn-primary" disabled={!medicalAnimalId || medicalLoading} onClick={() => callAI('/ai/medical-summary', { animalId: medicalAnimalId }, setMedicalResult, setMedicalLoading)}>
@@ -187,6 +202,7 @@ export default function AIToolsPage() {
             </div>
           </div>
           <div className="ai-tool-card-body">
+            <PresetButtons labels={['Adoption spotlight', 'Shelter update']} prerequisite={!animals.length ? (referenceErrors[0] ? 'Animal records could not be loaded.' : 'Add an animal record first.') : ''} onFill={(i) => setSocialAnimalId(selectedOrAvailable(socialAnimalId, animals, i))} />
             <div className="ai-tool-controls">
               <FormField label="Select Animal" name="socialAnimal" type="select" value={socialAnimalId} onChange={(_, v) => setSocialAnimalId(v)} options={animalOptions} placeholder="Choose an animal..." />
               <button className="btn btn-primary" disabled={!socialAnimalId || socialLoading} onClick={() => callAI('/ai/social-media', { animalId: socialAnimalId }, setSocialResult, setSocialLoading)}>
@@ -209,6 +225,7 @@ export default function AIToolsPage() {
             </div>
           </div>
           <div className="ai-tool-card-body">
+            <PresetButtons labels={['Welcome letter', 'Medical update']} prerequisite={!placements.length ? (referenceErrors[3] ? 'Placements could not be loaded.' : 'Create a foster placement first.') : ''} onFill={(i) => { setFosterPlacementId(selectedOrAvailable(fosterPlacementId, placements, i)); setFosterCommType(i ? 'medical_update' : 'welcome'); }} />
             <div className="ai-tool-controls">
               <FormField label="Select Placement" name="fosterPlacement" type="select" value={fosterPlacementId} onChange={(_, v) => setFosterPlacementId(v)} options={placementOptions} placeholder="Choose a placement..." />
               <FormField label="Communication Type" name="fosterCommType" type="select" value={fosterCommType} onChange={(_, v) => setFosterCommType(v)} options={[{value:'welcome',label:'Welcome Letter'},{value:'update',label:'Progress Update'},{value:'transition',label:'Transition to Adopter'},{value:'medical_update',label:'Medical Update'}]} />
@@ -232,6 +249,7 @@ export default function AIToolsPage() {
             </div>
           </div>
           <div className="ai-tool-card-body">
+            <PresetButtons labels={['Emergency care appeal', 'Community clinic appeal']} onFill={(i) => setDonationCampaign(i ? 'Community Spay and Neuter Clinic' : 'Emergency Veterinary Care Fund')} />
             <div className="ai-tool-controls">
               <FormField label="Campaign Name" name="donationCampaign" value={donationCampaign} onChange={(_, v) => setDonationCampaign(v)} placeholder="Enter campaign name..." />
               <button className="btn btn-primary" disabled={!donationCampaign || donationLoading} onClick={() => callAI('/ai/donation-appeal', { campaign: donationCampaign }, setDonationResult, setDonationLoading)}>
@@ -254,6 +272,7 @@ export default function AIToolsPage() {
             </div>
           </div>
           <div className="ai-tool-card-body">
+            <PresetButtons labels={['First adopter match', 'Another adopter match']} prerequisite={!applications.length ? (referenceErrors[2] ? 'Applications could not be loaded.' : 'Create an adoption application first.') : ''} onFill={(i) => setMatchApplicationId(selectedOrAvailable(matchApplicationId, applications, i))} />
             <div className="ai-tool-controls">
               <FormField label="Select Application" name="matchApplication" type="select" value={matchApplicationId} onChange={(_, v) => setMatchApplicationId(v)} options={applicationOptions} placeholder="Choose an application..." />
               <button className="btn btn-primary" disabled={!matchApplicationId || matchLoading} onClick={() => callAI('/ai/match-animal', { applicationId: parseInt(matchApplicationId) }, setMatchResult, setMatchLoading)}>
@@ -276,6 +295,7 @@ export default function AIToolsPage() {
             </div>
           </div>
           <div className="ai-tool-card-body">
+            <PresetButtons labels={['First introduction', 'Shared space review']} prerequisite={animals.length < 2 ? (referenceErrors[0] ? 'Animal records could not be loaded.' : 'At least two real animal records are required.') : ''} onFill={(i) => { const chosen = selectedOrAvailable(compatNewAnimalId, animals, i); setCompatNewAnimalId(chosen); if (!compatExistingIds.trim()) setCompatExistingIds(String(animals.find((animal) => String(animal.id) !== chosen)?.id || '')); }} />
             <div className="ai-tool-controls">
               <FormField
                 label="New Animal"
@@ -325,6 +345,7 @@ export default function AIToolsPage() {
             </div>
           </div>
           <div className="ai-tool-card-body">
+            <PresetButtons labels={['Brindle shelter dog', 'Long-haired shelter cat']} onFill={(i) => { const sample = i ? { description: 'Adult cat with a long cream coat, darker face and ears, blue eyes, and a calm indoor temperament.', species: 'cat', color: 'cream and seal point', weight: '10', age: '4', traits: 'Long coat, blue eyes, dark face and ears' } : { description: 'Young medium-sized dog with a short brindle coat, broad head, floppy ears, and an energetic friendly temperament.', species: 'dog', color: 'brindle', weight: '42', age: '2', traits: 'Short coat, floppy ears, athletic build' }; setBreedDescription(sample.description); setBreedSpecies(sample.species); setBreedColor(sample.color); setBreedWeight(sample.weight); setBreedAge(sample.age); setBreedTraits(sample.traits); }} />
             <div className="ai-tool-controls">
               <FormField label="Description *" name="breedDescription" type="textarea" value={breedDescription} onChange={(_, v) => setBreedDescription(v)} placeholder="Brown short coat, ~30lbs, muscular build, floppy ears, active and friendly..." />
               <FormField label="Species" name="breedSpecies" value={breedSpecies} onChange={(_, v) => setBreedSpecies(v)} placeholder="dog, cat, etc." />
@@ -363,6 +384,7 @@ export default function AIToolsPage() {
             </div>
           </div>
           <div className="ai-tool-card-body">
+            <PresetButtons labels={['Family household', 'Apartment household']} prerequisite={!animals.length ? (referenceErrors[0] ? 'Animal records could not be loaded.' : 'Add an animal record first.') : ''} onFill={(i) => { setReturnAnimalId(selectedOrAvailable(returnAnimalId, animals, i)); setReturnAdopterProfile(JSON.stringify(i ? { household_size: 1, has_children: false, has_yard: false, experience_level: 'experienced', hours_alone_per_day: 6, other_pets: ['cat'] } : { household_size: 4, has_children: true, has_yard: true, experience_level: 'first_time', hours_alone_per_day: 3, other_pets: [] }, null, 2)); }} />
             <div className="ai-tool-controls">
               <FormField label="Select Animal" name="returnAnimal" type="select" value={returnAnimalId} onChange={(_, v) => setReturnAnimalId(v)} options={animalOptions} placeholder="Choose an animal..." />
               <FormField

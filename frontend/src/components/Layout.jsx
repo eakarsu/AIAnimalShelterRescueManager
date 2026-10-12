@@ -1,3 +1,4 @@
+import AIReportLibrary from "./AIReportLibrary";
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   PawPrint, Home, Stethoscope, Brain, Heart, FileText, Users, HandHeart,
@@ -109,7 +110,7 @@ export default function Layout({ children }) {
               })}
             </div>
           ))}
-        </nav>
+        <AIReportLibrary /></nav>
         <main className="main-content">
           {children}
         </main>

@@ -55,7 +55,7 @@ app.use('/api/strayholds', strayholdsRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/medications', medicationsRoutes);
 app.use('/api/quarantine', quarantineRoutes);
-if (process.env.ENABLE_EXPERIMENTAL_AI === 'true') app.use('/api/ai', aiRoutes);
+app.use('/api/ai', aiRoutes);
 app.use('/api/runtime-ai', require('./routes/runtimeAi'));
 app.use('/api/shelter-workflow', require('./routes/shelterWorkflow'));
 
@@ -69,6 +69,14 @@ app.get('/api/health', (req, res) => {
 });
 
 // 404 handler
+
+// Advisory AI reports only; native execution and approval routes stay unchanged.
+const aiWorkspaceSupport = require("./aiWorkspaceAdapters.cjs");
+const aiWorkspaceDatabase = require("./db.js");
+app.use('/api/report-workspace', require("./aiWorkspace.cjs").createAIWorkspaceRouter({
+  pool: aiWorkspaceDatabase, authenticateToken: require("./middleware/auth.js"),
+  aiRateLimiter: aiWorkspaceSupport.createWorkspaceLimiter(), features: require("./aiWorkspaceFeatures.json"),
+}));
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });

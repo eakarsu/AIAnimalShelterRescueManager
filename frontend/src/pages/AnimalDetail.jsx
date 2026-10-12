@@ -2,22 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Brain, Stethoscope, Share2, ArrowLeft, Sparkles } from 'lucide-react';
 import api from '../api';
-
-function AIResultCard({ title, content, isLoading }) {
-  if (!isLoading && !content) return null;
-  return (
-    <div style={{ marginTop: '12px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-      <div style={{ fontWeight: 600, marginBottom: '8px', color: '#374151' }}>{title}</div>
-      {isLoading ? (
-        <div style={{ color: '#6b7280', fontStyle: 'italic' }}>Generating with AI...</div>
-      ) : (
-        <div style={{ whiteSpace: 'pre-wrap', fontSize: '14px', color: '#374151', lineHeight: 1.6 }}>
-          {typeof content === 'object' ? JSON.stringify(content, null, 2) : content}
-        </div>
-      )}
-    </div>
-  );
-}
+import AIOutput from '../components/AIOutput';
 
 export default function AnimalDetail() {
   const { id } = useParams();
@@ -61,7 +46,7 @@ export default function AnimalDetail() {
     try {
       const res = await api.post(endpoint, body);
       const d = res.data;
-      setResult(d.listing || d.analysis || d.summary || d.post || d.content || d);
+      setResult(d.listing ?? d.analysis ?? d.summary ?? d.post ?? d.content ?? d);
     } catch (err) {
       setResult('Error: ' + (err.response?.data?.error || 'AI request failed'));
     } finally {
@@ -194,10 +179,10 @@ export default function AnimalDetail() {
           </button>
         </div>
 
-        <AIResultCard title="Adoption Listing" content={adoptionListing} isLoading={adoptionLoading} />
-        <AIResultCard title="Behavior Analysis" content={behaviorAnalysis} isLoading={behaviorLoading} />
-        <AIResultCard title="Medical Summary" content={medicalSummary} isLoading={medicalLoading} />
-        <AIResultCard title="Social Media Post" content={socialPost} isLoading={socialLoading} />
+        <AIOutput title="Adoption Listing" content={adoptionListing} isLoading={adoptionLoading} />
+        <AIOutput title="Behavior Analysis" content={behaviorAnalysis} isLoading={behaviorLoading} />
+        <AIOutput title="Medical Summary" content={medicalSummary} isLoading={medicalLoading} />
+        <AIOutput title="Social Media Post" content={socialPost} isLoading={socialLoading} />
       </div>
     </div>
   );

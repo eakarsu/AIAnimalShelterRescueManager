@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api';
+import { listItems } from './listResponse';
 
 export default function useCrud(endpoint) {
   const [data, setData] = useState([]);
@@ -11,10 +12,9 @@ export default function useCrud(endpoint) {
     setError('');
     try {
       const res = await api.get(endpoint);
-      const items = Array.isArray(res.data) ? res.data : (res.data.data || res.data.rows || []);
-      setData(Array.isArray(items) ? items : []);
+      setData(listItems(res.data, endpoint));
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to fetch data');
+      setError(err.response?.data?.error || err.message || 'Failed to fetch data');
       setData([]);
     } finally {
       setLoading(false);

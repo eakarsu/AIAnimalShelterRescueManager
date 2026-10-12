@@ -80,7 +80,7 @@ export default function LoginPage() {
           <div className="login-divider">or</div>
           <button className="btn btn-accent btn-lg" type="button" onClick={quickLogin} disabled={loading}>
             <Zap size={18} />
-            Auto Fill Demo Credentials
+            Fill Demo Credentials
           </button>
         </form>
       </div>

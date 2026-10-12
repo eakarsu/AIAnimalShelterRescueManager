@@ -4,7 +4,7 @@ import { Search, Edit2, Trash2, Inbox } from 'lucide-react';
 export default function DataTable({ columns, data, onRowClick, onDelete, onEdit, searchPlaceholder }) {
   const [search, setSearch] = useState('');
 
-  const filtered = data.filter((row) => {
+  const filtered = (Array.isArray(data) ? data : []).filter((row) => {
     if (!search) return true;
     const q = search.toLowerCase();
     return columns.some((col) => {
