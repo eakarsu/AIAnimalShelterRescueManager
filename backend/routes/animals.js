@@ -25,6 +25,10 @@ router.get('/', async (req, res) => {
       params.push(`%${breed}%`);
       conditions.push(`breed ILIKE $${params.length}`);
     }
+    if (req.query.q) {
+      params.push(`%${req.query.q}%`);
+      conditions.push(`(name ILIKE $${params.length} OR breed ILIKE $${params.length} OR color ILIKE $${params.length})`);
+    }
 
     if (conditions.length > 0) {
       baseQuery += ' WHERE ' + conditions.join(' AND ');

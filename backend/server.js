@@ -58,6 +58,7 @@ app.use('/api/quarantine', quarantineRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/runtime-ai', require('./routes/runtimeAi'));
 app.use('/api/shelter-workflow', require('./routes/shelterWorkflow'));
+app.use('/api', require('./routes/featurePack'));
 
 // Custom Shelter Views (registered before 404 handler)
 app.use('/api/custom-views', require('./routes/customViews'));

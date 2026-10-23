@@ -9,6 +9,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const demoEmail = import.meta.env.VITE_DEMO_EMAIL || '';
+  const demoPassword = import.meta.env.VITE_DEMO_PASSWORD || '';
 
   const doLogin = async (e, em, pw) => {
     if (e) e.preventDefault();
@@ -28,6 +30,16 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fillDemoCredentials = async () => {
+    if (demoEmail && demoPassword) { setEmail(demoEmail); setPassword(demoPassword); setError(''); return; }
+    try {
+      const res = await fetch('/api/auth/demo-credentials', { cache: 'no-store' });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.email && data?.password) { setEmail(data.email); setPassword(data.password); setError(''); return; }
+    } catch {}
+    setError('Demo credentials are not configured for this environment.');
   };
 
   const quickLogin = async () => {
@@ -81,6 +93,9 @@ export default function LoginPage() {
           <button className="btn btn-accent btn-lg" type="button" onClick={quickLogin} disabled={loading}>
             <Zap size={18} />
             Fill Demo Credentials
+          </button>
+          <button className="btn btn-lg" type="button" aria-label="Fill demo credentials" onClick={fillDemoCredentials}>
+            Fill demo credentials
           </button>
         </form>
       </div>
